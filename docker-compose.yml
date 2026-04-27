@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"          # پورت API Ollama
+    volumes:
+      - ollama-data:/root/.ollama   # ذخیره مدل‌ها (gemma4 و بقیه)
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_KEEP_ALIVE=24h
+    # اگر GPU داری (NVIDIA) این بخش رو فعال کن:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"               # رابط وب روی پورت 3000
+    volumes:
+      - open-webui-data:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_AUTH=false          # اگر نمی‌خوای لاگین داشته باشه (برای استفاده شخصی)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - ollama
+
+volumes:
+  ollama-data:
+  open-webui-data:
